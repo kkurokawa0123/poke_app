@@ -1,0 +1,39 @@
+# version: "3"
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    # Rails API バックエンド
+  back:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env.local
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -b '0.0.0.0'"
+    volumes:
+      - ./backend:/poke_app/backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    tty: true
+    stdin_open: true
+
+    # Vite React フロントエンド
+  front:
+    build: ./frontend
+    command: npm run dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./frontend:/poke_app/frontend
+
+volumes:
+  mysql_data:
